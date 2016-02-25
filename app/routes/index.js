@@ -4,6 +4,8 @@ var http = require('http')
 
 module.exports = function(app) {
 
+	var UrlShortener = app.models.urlShortener;
+
 	app.route('/')
 	  .get(function(req, res) {
 	  	res.json({status: 'URL Shortener API'});
@@ -13,15 +15,14 @@ module.exports = function(app) {
 	  .get(function(req, res) {
 	  	var url = req.params.url;	  	
 	  	if(validate(url)) {
-	  		var fullHostname = removeHttpFromHost(url);	  		
-	  		var hostname = fullHostname.split('/')[0];
-	  		var path = '/' + fullHostname.split('/')[1];
+	  		var fullUrl = removeHttpFromHost(url);	  		
+	  		var hostname = fullUrl.split('/')[0];
+	  		var path = '/' + fullUrl.split('/')[1];	  		
 	  		var options = {method: 'GET', host: hostname, port: 80, path: path};
-		  	var call = http.request(options, function(response) {			  		
-		  		res.json({
-		  			original_url: addHttpOnHost(fullHostname),
-		  			short_url: addHttpOnHost(req.headers.host)
-		  		});
+	  		fullUrl = addHttpOnHost(fullUrl);
+	  		var hostname = addHttpOnHost(req.headers.host);
+		  	var call = http.request(options, function(response) {
+		  		findOrCreate(fullUrl, req, res);
 		  	})
 		  	call.end();
 		  	call.on('error', function(error) {
@@ -29,15 +30,38 @@ module.exports = function(app) {
 		  	})
 	  	} else {	  		
 	  		if (req.query.allow === 'true') {
-	  			res.json({
-	  				original_url: req.params.url,
-	  				short_url: req.params.url
-	  			});
+	  			findOrCreate(removeHttpFromHost(url), req, res);
 	  		} else {
 	  			res.json({error: 'URL invalid'});
 	  		}	  		
 	  	}	  	
 	  });
+
+	  function findOrCreate(fullUrl, req, res) {
+		UrlShortener.findOne({original_url: fullUrl}).exec()
+		.then(function(urlShortener) {		  			
+			if(!urlShortener) {
+				var randomCode = makeRandomId();
+				var newUrlShortener = {
+					url_code: randomCode,
+					original_url: fullUrl,
+					short_url: addHttpOnHost(req.headers.host) + '/' + randomCode
+				};		  				
+				UrlShortener.create(newUrlShortener)
+				.then(function(urlShortener) {
+					res.json({
+						original_url: urlShortener.original_url,
+						short_url: urlShortener.short_url
+					});
+				})
+			} else {
+				res.json({
+					original_url: urlShortener.original_url,
+					short_url: urlShortener.short_url
+				});
+			}
+		});
+	}
 }
 
 function validate(url) {
@@ -57,4 +81,14 @@ function isHttpPresent(url) {
 
 function addHttpOnHost(url) {
 	return 'http://' + url;
+}
+
+function makeRandomId() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
 }
