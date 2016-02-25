@@ -37,6 +37,11 @@ module.exports = function(app) {
 	  	}	  	
 	  });
 
+	app.route('/:urlCode')
+	  .get(function(req, res) {
+	    res.redirect(addHttpOnHost(req.headers.host) + '/' + req.params.urlCode);
+	  });
+
 	  function findOrCreate(fullUrl, req, res) {
 		UrlShortener.findOne({original_url: fullUrl}).exec()
 		.then(function(urlShortener) {		  			
