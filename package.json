@@ -19,6 +19,9 @@
     "express-load": "^1.1.15",
     "helmet": "^1.1.0",
     "method-override": "^2.3.5",
+    "mongodb": "^2.1.7",
+    "mongoose": "^4.4.5",
+    "mongoose-findorcreate": "^0.1.2",
     "morgan": "^1.7.0",
     "winston": "^2.1.1"
   },
