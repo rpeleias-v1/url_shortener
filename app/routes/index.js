@@ -90,10 +90,8 @@ module.exports = function(app) {
 	  function findOrCreate(fullUrl, req, res) {	  	
 		UrlShortener.findOne({original_url: fullUrl}).exec()
 		.then(function(urlShortener) {				  			
-			if(!urlShortener) {
-				console.log('test');
-				var randomCode = urlUtils.makeRandomId();
-				console.log(randomCode);
+			if(!urlShortener) {				
+				var randomCode = urlUtils.makeRandomId();				
 				var newUrlShortener = {
 					url_code: randomCode,
 					original_url: fullUrl,
