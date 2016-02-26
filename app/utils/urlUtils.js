@@ -12,6 +12,7 @@ module.exports = function(app) {
 			return url;
 		}
 		return url.substring(7);
+				
 	}
 
 	urlUtils.prototype.isHttpPresent = function(url) {
@@ -19,7 +20,10 @@ module.exports = function(app) {
 	}
 
 	urlUtils.prototype.addHttpOnHost = function(url) {
-		return 'http://' + url;
+		if(!this.isHttpPresent(url)) {
+			return 'http://' + url;	
+		}
+		return url;
 	}
 	
 	urlUtils.prototype.makeRandomId = function() {
@@ -35,6 +39,8 @@ module.exports = function(app) {
 	urlUtils.prototype.getHostpath = function(url) {
 		if(!this.isHttpPresent(url)) {
 			return url.split('/')[0];
+		} else if (this.isHttpPresent(url)){
+			return url.split('/')[2];
 		} else {
 			return "Split is not possible";
 		}
@@ -43,6 +49,8 @@ module.exports = function(app) {
 	urlUtils.prototype.getRelativePath = function(url) {
 		if(!this.isHttpPresent(url)) {
 			return '/' + url.split('/')[1];
+		} else if (this.isHttpPresent(url)){
+			return '/' +url.split('/')[3];
 		} else {
 			return "Split is not possible";
 		}

@@ -6,6 +6,7 @@ module.exports = function(app) {
 
 	var UrlShortener = app.models.urlShortener;
 	var UrlUtils = app.utils.urlUtils;
+	var urlUtils = new UrlUtils();
 
 	app.route('/')
 	  .get(function(req, res) {
@@ -14,18 +15,14 @@ module.exports = function(app) {
 
 	app.route('/new/:url(*)')	
 	  .get(function(req, res) {
-	  	var url = req.params.url;	  
-	  	var urlUtils = new UrlUtils();	
-	  	if(urlUtils.validate(url)) {
-	  		var fullUrl = urlUtils.removeHttpFromHost(url);	  		
-	  		var hostname = urlUtils.getHostpath(fullUrl);
-	  		var path = urlUtils.getRelativePath(fullUrl);	  		
-	  		var options = {method: 'GET', host: hostname, port: 80, path: path};
-	  		fullUrl = urlUtils.addHttpOnHost(fullUrl);
-	  		var hostname = urlUtils.addHttpOnHost(req.headers.host);
+	  	var url = req.params.url;	  	  	
+	  	if(urlUtils.validate(url)) {		
+	  		var fullUrl = urlUtils.removeHttpFromHost(url);	  			  		
+	  		var options = {method: 'GET', host: urlUtils.getHostpath(fullUrl), port: 80, path: urlUtils.getRelativePath(fullUrl)};
+	  		fullUrl = urlUtils.addHttpOnHost(fullUrl);	  		
 		  	var call = http.request(options, function(response) {
 		  		findOrCreate(fullUrl, req, res);
-		  	})
+		  	});
 		  	call.end();
 		  	call.on('error', function(error) {
 		  		res.json(error);
@@ -40,8 +37,7 @@ module.exports = function(app) {
 	  });
 
 	app.route('/:urlCode')
-		.get(function(req, res) {
-			console.log(req.params.urlCode);
+		.get(function(req, res) {			
 			UrlShortener.findOne({
 				url_code: req.params.urlCode
 			})
@@ -58,11 +54,13 @@ module.exports = function(app) {
 			})
 		})
 
-	  function findOrCreate(fullUrl, req, res) {
+	  function findOrCreate(fullUrl, req, res) {	  	
 		UrlShortener.findOne({original_url: fullUrl}).exec()
-		.then(function(urlShortener) {		  			
+		.then(function(urlShortener) {				  			
 			if(!urlShortener) {
+				console.log('test');
 				var randomCode = urlUtils.makeRandomId();
+				console.log(randomCode);
 				var newUrlShortener = {
 					url_code: randomCode,
 					original_url: fullUrl,

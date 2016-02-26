@@ -1,8 +1,8 @@
 var logger = require('./logger');
 
 module.exports = {
-	port: 3000,	
-	db: 'mongodb://rpeleias:rpeleias@ds017678.mlab.com:17678/url_shortener_test',
+	port: process.env.PORT,
+	db: 'mongodb://rpeleias:rpeleias@ds017688.mlab.com:17688/url_shortener_production',
 	params: {
 		logging: false,
 		define: {
