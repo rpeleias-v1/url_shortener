@@ -33,10 +33,6 @@ module.exports = function() {
 	load('models', {cwd: 'app'})
 	  .then('routes')
 	  .into(app);
-
-	app.get('*', function(req, res) {
-		res.status(400).json({msg: 'path not found'});	
-	});
-
+	  
 	return app;
 }

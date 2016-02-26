@@ -27,7 +27,7 @@ module.exports = function(app) {
 		  	call.end();
 		  	call.on('error', function(error) {
 		  		res.json(error);
-		  	})
+		  	});
 	  	} else {	  		
 	  		if (req.query.allow === 'true') {
 	  			findOrCreate(removeHttpFromHost(url), req, res);
@@ -38,9 +38,23 @@ module.exports = function(app) {
 	  });
 
 	app.route('/:urlCode')
-	  .get(function(req, res) {
-	    res.redirect(addHttpOnHost(req.headers.host) + '/' + req.params.urlCode);
-	  });
+		.get(function(req, res) {
+			console.log(req.params.urlCode);
+			UrlShortener.findOne({
+				url_code: req.params.urlCode
+			})
+			.then(function(urlShortener) {
+				if (urlShortener) {					
+					res.redirect(urlShortener.original_url);
+				}
+				else {
+					res.json({error: 'URL not found'});
+				}
+			})
+			.catch(function(error) {
+				res.status(412).json({msg: message});
+			})
+		})
 
 	  function findOrCreate(fullUrl, req, res) {
 		UrlShortener.findOne({original_url: fullUrl}).exec()
