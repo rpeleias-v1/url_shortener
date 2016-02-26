@@ -31,8 +31,9 @@ module.exports = function() {
 	app.use(helmet.nosniff());
 
 	load('models', {cwd: 'app'})
+	  .then('utils')
 	  .then('routes')
 	  .into(app);
-	  
+
 	return app;
 }

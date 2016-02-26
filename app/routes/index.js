@@ -5,6 +5,7 @@ var http = require('http')
 module.exports = function(app) {
 
 	var UrlShortener = app.models.urlShortener;
+	var UrlUtils = app.utils.urlUtils;
 
 	app.route('/')
 	  .get(function(req, res) {
@@ -13,14 +14,15 @@ module.exports = function(app) {
 
 	app.route('/new/:url(*)')	
 	  .get(function(req, res) {
-	  	var url = req.params.url;	  	
-	  	if(validate(url)) {
-	  		var fullUrl = removeHttpFromHost(url);	  		
-	  		var hostname = fullUrl.split('/')[0];
-	  		var path = '/' + fullUrl.split('/')[1];	  		
+	  	var url = req.params.url;	  
+	  	var urlUtils = new UrlUtils();	
+	  	if(urlUtils.validate(url)) {
+	  		var fullUrl = urlUtils.removeHttpFromHost(url);	  		
+	  		var hostname = urlUtils.getHostpath(fullUrl);
+	  		var path = urlUtils.getRelativePath(fullUrl);	  		
 	  		var options = {method: 'GET', host: hostname, port: 80, path: path};
-	  		fullUrl = addHttpOnHost(fullUrl);
-	  		var hostname = addHttpOnHost(req.headers.host);
+	  		fullUrl = urlUtils.addHttpOnHost(fullUrl);
+	  		var hostname = urlUtils.addHttpOnHost(req.headers.host);
 		  	var call = http.request(options, function(response) {
 		  		findOrCreate(fullUrl, req, res);
 		  	})
@@ -30,7 +32,7 @@ module.exports = function(app) {
 		  	});
 	  	} else {	  		
 	  		if (req.query.allow === 'true') {
-	  			findOrCreate(removeHttpFromHost(url), req, res);
+	  			findOrCreate(urlUtils.removeHttpFromHost(url), req, res);
 	  		} else {
 	  			res.json({error: 'URL invalid'});
 	  		}	  		
@@ -60,11 +62,11 @@ module.exports = function(app) {
 		UrlShortener.findOne({original_url: fullUrl}).exec()
 		.then(function(urlShortener) {		  			
 			if(!urlShortener) {
-				var randomCode = makeRandomId();
+				var randomCode = urlUtils.makeRandomId();
 				var newUrlShortener = {
 					url_code: randomCode,
 					original_url: fullUrl,
-					short_url: addHttpOnHost(req.headers.host) + '/' + randomCode
+					short_url: urlUtils.addHttpOnHost(req.headers.host) + '/' + randomCode
 				};		  				
 				UrlShortener.create(newUrlShortener)
 				.then(function(urlShortener) {
@@ -81,33 +83,4 @@ module.exports = function(app) {
 			}
 		});
 	}
-}
-
-function validate(url) {
-	return /^((https?):\/\/)?([w|W]{3}\.)?[a-zA-Z0-9\-\.]{3,}\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?(\/[a-zA-Z0-9]*)?$/.test(url);
-}
-
-function removeHttpFromHost(url) {
-	if(!isHttpPresent(url)) {
-		return url;
-	}
-	return url.substring(7);
-}
-
-function isHttpPresent(url) {
-	return /^https?:\/\//.test(url);
-}
-
-function addHttpOnHost(url) {
-	return 'http://' + url;
-}
-
-function makeRandomId() {
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    for( var i=0; i < 5; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return text;
 }
